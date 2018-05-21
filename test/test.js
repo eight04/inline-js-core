@@ -4,30 +4,24 @@ const assert = require("assert");
 const sinon = require("sinon");
 
 describe("parser", () => {
-  describe("parsePipes", () => {
-    const {parsePipes} = require("../lib/parser");
+  describe("parsePipes, pipesToString", () => {
+    const {parsePipes, pipesToString} = require("../lib/parser");
+    const cases = [
+      ["basic", "test:123", [{name: "test", args: ["123"]}]],
+      ["no value", "a", [{name: "a", args: []}]],
+      ["multiple values", "a:b,c", [{name: "a", args: ["b", "c"]}]],
+      ["escape characters", "a\\:b:a\\,b", [{name: "a:b", args: ["a,b"]}]],
+      ["pipes", "a:1|b:2", [{name: "a", args: [1]}, {name: "b", args: [2]}]]
+    ];
     
-    it("basic", () => {
-      const result = parsePipes("test:123");
-      assert.deepEqual(result, [{name: "test", args: ["123"]}]);
-    });
-    
-    it("no value", () => {
-      const result = parsePipes("a");
-      assert.deepEqual(result, [{name: "a", args: []}]);
-    });
-    
-    it("multiple values", () => {
-      const result = parsePipes("a:b,c");
-      assert.deepEqual(result, [{name: "a", args: ["b", "c"]}]);
-    });
-    
-    it("escape characters", () => {
-      const result = parsePipes("a\\:b:a\\,b");
-      assert.deepEqual(result, [{name: "a:b", args: ["a,b"]}]);
-    });
+    for (const [title, input, output] of cases) {
+      it(title, () => {
+        assert.deepEqual(parsePipes(input), output);
+        assert.equal(pipesToString(output), input);
+      });
+    }
   });
-
+  
   describe("parseDirective", () => {
     const {parseDirective} = require("../lib/parser");
     
@@ -123,6 +117,16 @@ $inline.end`;
       });
     });
     
+    it("require one line", () => {
+      const content = "$inline.start('foo')\n$inline.end";
+      assert.throws(() => parseText(content), ParseError);
+    });
+    
+    it("missing end", () => {
+      const content = "$inline.start('foo')";
+      assert.throws(() => parseText(content), ParseError);
+    });
+    
     it("skipStart, skipEnd", () => {
       const content = `$inline.skipStart
 $inline('foo')
@@ -140,13 +144,31 @@ $inline.skipEnd`;
       assert.equal(right.value, "<!--$inline.close(4)-->");
     });
     
+    it("ignore inline insied open/close", () => {
+      const content = "<!--$inline.open('foo', 3)-->$inline('bar')<!--$inline.close(4)-->";
+      assert.equal(parseText(content).length, 3);
+    });
+    
+    it("missing close", () => {
+      const content = "<!--$inline.open('foo', 3)-->$inline('bar')";
+      assert.throws(() => parseText(content), ParseError);
+    });
+    
+    it("default offset is 0", () => {
+      const content = "<!--$inline.open('foo')-->$inline('bar')<!--$inline.close-->";
+      const [left,, right] = parseText(content);
+      assert.equal(left.value, "<!--$inline.open('foo')");
+      assert.equal(right.value, "$inline.close-->");
+    });
+    
     it("invalid function", () => {
       const cases = [
         "$inline.?('foo')",
         "$inline.line('foo',,)",
         "$inline.line('foo'",
         "$inline.line(/foo/)",
-        "$inline.line('foo"
+        "$inline.line('foo",
+        "$inline.foo('foo')"
       ];
       
       for (const content of cases) {
