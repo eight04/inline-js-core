@@ -1,0 +1,30 @@
+{
+  "name": "inline-js-core",
+  "version": "0.0.0",
+  "description": "The core part of inline-js. Create an inliner with multiple resource loaders, transformers, and shortcuts.",
+  "author": "eight04 <eight04@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "lint": "eslint **/*.js --ignore-pattern coverage --cache",
+    "nyc": "nyc --reporter=html mocha",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "test": "npm run lint && npm run nyc",
+    "preversion": "npm test",
+    "postversion": "git push --follow-tags && npm publish"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "js-tokens": "^3.0.1"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.1",
+    "eslint": "^4.19.1",
+    "mocha": "^4.1.0",
+    "nyc": "^11.8.0",
+    "sinon": "^5.0.7"
+  },
+  "repository": "eight04/inline-js-core"
+}
