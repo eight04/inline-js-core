@@ -39,10 +39,22 @@ describe("parser", () => {
   });
 
   describe("parseText", () => {
-    const {parseText} = require("../lib/parser");
+    const {parseText, ParseError} = require("../lib/parser");
     
     it("$inline", () => {
       const [result] = parseText("$inline('path/to/file')");
+      assert.equal(result.type, "$inline");
+      assert.deepEqual(result.params, ["path/to/file"]);
+    });
+    
+    it("backtick", () => {
+      const [result] = parseText("$inline(`path/to/file`)");
+      assert.equal(result.type, "$inline");
+      assert.deepEqual(result.params, ["path/to/file"]);
+    });
+    
+    it("double quote", () => {
+      const [result] = parseText("$inline(\"path/to/file\")");
       assert.equal(result.type, "$inline");
       assert.deepEqual(result.params, ["path/to/file"]);
     });
@@ -71,6 +83,16 @@ describe("parser", () => {
       assert.equal(right.value, "\ntest");
     });
     
+    it("first line", () => {
+      debugger;
+      const [result, right] = parseText("test$inline.line('path/to/file')test\ntest");
+      assert.equal(result.type, "$inline.line");
+      assert.deepEqual(result.params, ["path/to/file"]);
+      
+      assert.equal(right.type, "text");
+      assert.equal(right.value, "\ntest");
+    });
+    
     it("shortcut", () => {
       const content = "$inline.shortcut('test', 'file|t1:$2,$1')";
       const [result, text] = parseText(content);
@@ -79,6 +101,37 @@ describe("parser", () => {
       
       assert.equal(text.type, "text");
       assert.equal(text.value, content);
+    });
+    
+    it("skipStart, skipEnd", () => {
+      const content = `$inline.skipStart
+$inline('foo')
+$inline.skipEnd`;
+      const [result] = parseText(content);
+      assert.equal(result.value, content);
+    });
+    
+    it("open, close", () => {
+      const content = "<!--$inline.open('foo', 3)-->hello<!--$inline.close(4)-->";
+      const [left, result, right] = parseText(content);
+      
+      assert.equal(left.value, "<!--$inline.open('foo', 3)-->");
+      assert.deepEqual(result.params, ["foo", 3]);
+      assert.equal(right.value, "<!--$inline.close(4)-->");
+    });
+    
+    it("invalid function", () => {
+      assert.throws(() => {
+        parseText("$inline.?('foo')");
+      }, ParseError);
+      
+      assert.throws(() => {
+        parseText("$inline.line('foo',,)");
+      }, ParseError);
+      
+      assert.throws(() => {
+        parseText("$inline.line('foo'");
+      }, ParseError);
     });
   });
 });
@@ -179,4 +232,29 @@ $inline('foo:baz')`;
 OKbaz`);
       });
 	});
+  
+  it("buffer", () => {
+    const inliner = createInliner();
+    const files = {
+      a: "a",
+      b: Buffer.from("b"),
+      c: "$inline('file:a')$inline('file:b')"
+    };
+    const resource = {
+      name: "file",
+      read: (source, target) => {
+        return files[target.args[0]];
+      }
+    };
+    inliner.resource.add(resource);
+    const target = {
+      name: "file",
+      args: ["c"]
+    };
+    return inliner.inline(target)
+      .then(({content}) => {
+        assert(Buffer.isBuffer(content));
+        assert.equal(content.toString(), "ab");
+      });
+  });
 });
