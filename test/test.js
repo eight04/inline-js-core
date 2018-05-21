@@ -219,6 +219,46 @@ describe("shortcut", () => {
   });
 });
 
+describe("resource", () => {
+  const {createResourceLoader} = require("../lib/resource");
+  
+  it("basic", () => {
+    const resource = createResourceLoader();
+    resource.add({name: "foo", read: () => "foo"});
+    return resource.read(null, {name: "foo", args: []})
+      .then(content => {
+        assert.equal(content, "foo");
+        resource.remove("foo");
+        assert.throws(() => resource.read(null, {name: "foo", args: []}), Error);
+      });
+  });
+  
+  it("hash and cache", () => {
+    const resource = createResourceLoader();
+    const reader = {
+      name: "foo",
+      hash: (source, target) => {
+        return JSON.stringify([target.type, ...target.args]);
+      },
+      read: sinon.spy(() => {
+        return "foo";
+      })
+    };
+    resource.add(reader);
+    const target = {
+      name: "foo",
+      args: ["bar"]
+    };
+    return Promise.all([
+      resource.read(null, target),
+      resource.read(null, target)
+    ])
+      .then(() => {
+        assert(reader.read.calledOnce);
+      });
+  });
+});
+
 describe("functional", () => {
   const {createInliner} = require("..");
   
