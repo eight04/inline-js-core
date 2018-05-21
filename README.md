@@ -121,6 +121,10 @@ A pipe object. `name` is the transformer name and `args` is the arguments that w
 Changelog
 ---------
 
+* 0.1.1 (May 21, 2018)
+
+  - Fix: ignore parseDirective error when it is wrapped with other tags.
+
 * 0.1.0 (May 21, 2018)
 
     - Pull out core from inline-js.
