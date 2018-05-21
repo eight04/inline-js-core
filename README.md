@@ -1,6 +1,8 @@
 inline-js-core
 ==============
 
+[![install size](https://packagephobia.now.sh/badge?p=inline-js-core@0.1.0)](https://packagephobia.now.sh/result?p=inline-js-core@0.1.0)
+
 The core part of inline-js. Create an inliner with multiple resource loaders, transformers, and shortcuts.
 
 Installation
