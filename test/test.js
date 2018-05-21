@@ -134,6 +134,7 @@ $inline.end`;
     it("skipStart, skipEnd", () => {
       const content = `$inline.skipStart
 $inline('foo')
+$inline(bar) // ignore invalid $inline
 $inline.skipEnd`;
       const [result] = parseText(content);
       assert.equal(result.value, content);
