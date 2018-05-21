@@ -257,6 +257,27 @@ describe("resource", () => {
         assert(reader.read.calledOnce);
       });
   });
+  
+  it("resolve", () => {
+    const resource = createResourceLoader();
+    const reader = {
+      name: "foo",
+      resolve: (source, target) => {
+        target.args[0] = source.args[0] + "/" + target.args[0];
+      }
+    };
+    resource.add(reader);
+    const source = {
+      name: "bar",
+      args: ["bar"]
+    };
+    const target = {
+      name: "foo",
+      args: ["foo"]
+    };
+    resource.resolve(source, target);
+    assert.equal(target.args[0], "bar/foo");
+  });
 });
 
 describe("functional", () => {
