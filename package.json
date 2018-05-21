@@ -1,6 +1,6 @@
 {
   "name": "inline-js-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The core part of inline-js. Create an inliner with multiple resource loaders, transformers, and shortcuts.",
   "author": "eight04 <eight04@gmail.com>",
   "license": "MIT",
