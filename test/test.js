@@ -192,6 +192,26 @@ describe("shortcut", () => {
       return shortcuts.expand(null, pipes);
     };
   }
+  
+  it("add, remove", () => {
+    const shortcuts = createShortcutExpander();
+    shortcuts.add({name: "foo", expand: "bar"});
+    assert.equal(shortcuts.expand(null, parsePipes("foo")), "bar");
+    shortcuts.remove("foo");
+    assert.throws(() => shortcuts.expand(null, parsePipes("foo")), Error);
+  });
+  
+  it("clone, lookup", () => {
+    const shortcuts = createShortcutExpander();
+    shortcuts.add({name: "foo", expand: "bar"});
+    const shortcuts2 = shortcuts.clone();
+    assert.equal(shortcuts2.expand(null, parsePipes("foo")), "bar");
+  });
+  
+  it("invalid expander", () => {
+    const shortcuts = createShortcutExpander();
+    assert.throws(() => shortcuts.add({name: "foo", expand: /bar/}));
+  });
 	
 	it("basic", () => {
 		const expand = prepare("test", "a.txt|tr:$1");
@@ -277,6 +297,7 @@ describe("resource", () => {
     };
     resource.resolve(source, target);
     assert.equal(target.args[0], "bar/foo");
+    assert.throws(() => resource.resolve(target, source), Error);
   });
 });
 
