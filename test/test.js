@@ -84,7 +84,6 @@ describe("parser", () => {
     });
     
     it("first line", () => {
-      debugger;
       const [result, right] = parseText("test$inline.line('path/to/file')test\ntest");
       assert.equal(result.type, "$inline.line");
       assert.deepEqual(result.params, ["path/to/file"]);
@@ -101,6 +100,27 @@ describe("parser", () => {
       
       assert.equal(text.type, "text");
       assert.equal(text.value, content);
+    });
+    
+    it("start, end", () => {
+      const content = `$inline.start("foo")
+$inline("bar")
+$inline.end`;
+      const [left, result, right] = parseText(content);
+      assert.deepEqual(left, {
+        type: "text",
+        value: '$inline.start("foo")\n'
+      });
+      assert.deepEqual(result, {
+        type: "$inline.start",
+        params: ["foo"],
+        start: 21,
+        end: 35
+      });
+      assert.deepEqual(right, {
+        type: "text",
+        value: '\n$inline.end'
+      });
     });
     
     it("skipStart, skipEnd", () => {
@@ -121,17 +141,19 @@ $inline.skipEnd`;
     });
     
     it("invalid function", () => {
-      assert.throws(() => {
-        parseText("$inline.?('foo')");
-      }, ParseError);
+      const cases = [
+        "$inline.?('foo')",
+        "$inline.line('foo',,)",
+        "$inline.line('foo'",
+        "$inline.line(/foo/)",
+        "$inline.line('foo"
+      ];
       
-      assert.throws(() => {
-        parseText("$inline.line('foo',,)");
-      }, ParseError);
-      
-      assert.throws(() => {
-        parseText("$inline.line('foo'");
-      }, ParseError);
+      for (const content of cases) {
+        assert.throws(() => {
+          parseText(content);
+        }, ParseError);
+      }
     });
   });
 });
