@@ -1,7 +1,9 @@
 inline-js-core
 ==============
 
-[![install size](https://packagephobia.now.sh/badge?p=inline-js-core@0.1.0)](https://packagephobia.now.sh/result?p=inline-js-core@0.1.0)
+[![Build Status](https://travis-ci.org/eight04/inline-js-core.svg?branch=master)](https://travis-ci.org/eight04/inline-js-core)
+[![Coverage Status](https://coveralls.io/repos/github/eight04/inline-js-core/badge.svg?branch=master)](https://coveralls.io/github/eight04/inline-js-core?branch=master)
+[![install size](https://packagephobia.now.sh/badge?p=inline-js-core)](https://packagephobia.now.sh/result?p=inline-js-core)
 
 The core part of inline-js. Create an inliner with multiple resource loaders, transformers, and shortcuts.
 
