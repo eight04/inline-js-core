@@ -3,6 +3,10 @@
 const assert = require("assert");
 const sinon = require("sinon");
 
+function mustFail() {
+  throw new Error("Must fail");
+}
+
 describe("parser", () => {
   describe("parsePipes, pipesToString", () => {
     const {parsePipes, pipesToString} = require("../lib/parser");
@@ -304,10 +308,6 @@ describe("resource", () => {
 describe("functional", () => {
   const {createInliner} = require("..");
   
-  function mustFail() {
-    throw new Error("Must fail");
-  }
-  
 	it("maxDepth", () => {
     const inliner = createInliner();
     inliner.resource.add({
@@ -381,6 +381,29 @@ OKbaz`);
       .then(({content}) => {
         assert(Buffer.isBuffer(content));
         assert.equal(content.toString(), "ab");
+      });
+  });
+});
+
+describe("transform", () => {
+  const {createTransformer} = require("../lib/transformer");
+  
+  it("add, remove", () => {
+    const transformer = createTransformer();
+    transformer.add({
+      name: "foo",
+      transform: (target, content) => content + "foo"
+    });
+    const transforms = [{name: "foo", args: []}];
+    return transformer.transform(null, "content", transforms)
+      .then(content => {
+        assert.equal(content, "contentfoo");
+        transformer.remove("foo");
+        return transformer.transform(null, "content", transforms)
+          .then(mustFail)
+          .catch(err => {
+            assert(err.message.includes("Unknown transformer"));
+          });
       });
   });
 });
