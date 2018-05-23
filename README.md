@@ -136,6 +136,10 @@ A pipe object. `name` is the transformer name and `args` is the arguments that w
 Changelog
 ---------
 
+* 0.2.0 (May 23, 2018)
+
+  - **Change: the first argument of `Transformer.transform` is changed to a `TransformContext` object.** This should help implement "endent" transformer.
+
 * 0.1.1 (May 21, 2018)
 
   - Fix: ignore parseDirective error when it is wrapped with other tags.
