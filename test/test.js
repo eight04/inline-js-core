@@ -384,6 +384,39 @@ OKbaz`);
         assert.equal(content.toString(), "ab");
       });
   });
+  
+  it("transform context", () => {
+    const inliner = createInliner();
+    const files = {
+      a: "a$inline('b|foo')b",
+      b: "b"
+    };
+    const resource = {
+      name: "file",
+      read: (source, target) => {
+        return files[target.args[0]];
+      }
+    };
+    inliner.resource.add(resource);
+    const transform = {
+      name: "foo",
+      transform(context, content) {
+        assert.equal(context.inlineDirective.start, 1);
+        assert.equal(context.inlineDirective.end, 17);
+        assert.equal(context.sourceContent, files.a);
+        return content + "foo";
+      }
+    };
+    inliner.transformer.add(transform);
+    const target = {
+      name: "file",
+      args: ["a"]
+    };
+    return inliner.inline(target)
+      .then(({content}) => {
+        assert.equal(content, "abfoob");
+      });
+  });
 });
 
 describe("transform", () => {

@@ -34,7 +34,7 @@ function createInliner({maxDepth = 10} = {}) {
       })
       .then(content => ({content, dependency}));
       
-    function inlineDirective(directive) {
+    function inlineDirective(content, directive) {
       let pipes = parsePipes(directive.params[0]);
       if (shortcuts.has(pipes[0].name)) {
         pipes = parsePipes(shortcuts.expand(target, pipes));
@@ -44,6 +44,12 @@ function createInliner({maxDepth = 10} = {}) {
         args: pipes[0].args.length ? pipes[0].args : [pipes[0].name]
       };
       const transforms = pipes.slice(1);
+      const transformContext = {
+        source: target,
+        sourceContent: content,
+        inlineDirective: directive,
+        inlineTarget
+      };
       return inline({
         source: target,
         target: inlineTarget,
@@ -51,7 +57,7 @@ function createInliner({maxDepth = 10} = {}) {
       })
         .then(({content, subDependency}) => {
           dependency[inlineTarget.args[0]] = subDependency;
-          return transformer.transform(inlineTarget, content, transforms);
+          return transformer.transform(transformContext, content, transforms);
         });
     }
 
@@ -68,7 +74,7 @@ function createInliner({maxDepth = 10} = {}) {
             });
             return "";
           }
-          return inlineDirective(result);
+          return inlineDirective(content, result);
         })
       )
         .then(contentArr => {
