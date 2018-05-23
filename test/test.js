@@ -337,17 +337,34 @@ describe("resource", () => {
 describe("functional", () => {
   const {createInliner} = require("..");
   
-	it("maxDepth", () => {
-    const inliner = createInliner();
-    inliner.resource.add({
-      name: "file",
-      read: () => "$inline('foo')"
-    });
-    const target = {
-      name: "file",
-      args: ["foo"]
+  function prepare(baseOptions) {
+    return options => {
+      options = Object.assign(baseOptions, options);
+      const inliner = createInliner();
+      const read = (source, target) => {
+        assert(target.args[0] in options.files);
+        return options.files[target.args[0]];
+      };
+      inliner.resource.add({
+        name: "file",
+        read
+      });
+      if (options.transforms) {
+        for (const [name, transform] of Object.entries(options.transforms)) {
+          inliner.transformer.add({name, transform});
+        }
+      }
+      return inliner.inline({name: "file", args: ["a"]});
     };
-    return inliner.inline(target)
+  }
+  
+	it("maxDepth", () => {
+    const test = prepare({
+      files: {
+        a: "$inline('a')"
+      }
+    });
+    return test()
       .then(mustFail)
       .catch(err => {
         assert(err.message.includes("Max recursion depth 10"));
@@ -355,33 +372,19 @@ describe("functional", () => {
 	});
 	
 	it("shortcut + transform", () => {
-    const inliner = createInliner();
-    const resource = {
-      name: "file",
-      read: sinon.spy((source, target) => {
-        if (target.args[0] == "foo") {
-          return `$inline.shortcut('foo', 'bar|t:$1')
-$inline('foo:baz')`;
+    const test = prepare({
+      files: {
+        a: `$inline.shortcut('foo', 'b|t:$1')
+$inline('foo:baz')`,
+        b: "OK"
+      },
+      transforms: {
+        t: (target, content, arg) => {
+          return content + arg;
         }
-        if (target.args[0] == "bar") {
-          return "OK";
-        }
-        throw new Error(`unknown args: ${target.args}`);
-      })
-    };
-    inliner.resource.add(resource);
-    const transform = {
-      name: "t",
-      transform: sinon.spy((target, content, arg) => {
-        return content + arg;
-      })
-    };
-    inliner.transformer.add(transform);
-    const target = {
-      name: "file",
-      args: ["foo"]
-    };
-    return inliner.inline(target)
+      }
+    });
+    return test()
       .then(({content}) => {
         assert.equal(content, `$inline.shortcut('foo', 'bar|t:$1')
 OKbaz`);
@@ -389,24 +392,14 @@ OKbaz`);
 	});
   
   it("buffer", () => {
-    const inliner = createInliner();
-    const files = {
-      a: "a",
-      b: Buffer.from("b"),
-      c: "$inline('file:a')$inline('file:b')"
-    };
-    const resource = {
-      name: "file",
-      read: (source, target) => {
-        return files[target.args[0]];
+    const test = prepare({
+      files: {
+        a: "$inline('b')$inline('c')",
+        b: "a",
+        c: Buffer.from("b")
       }
-    };
-    inliner.resource.add(resource);
-    const target = {
-      name: "file",
-      args: ["c"]
-    };
-    return inliner.inline(target)
+    });
+    return test()
       .then(({content}) => {
         assert(Buffer.isBuffer(content));
         assert.equal(content.toString(), "ab");
@@ -414,35 +407,42 @@ OKbaz`);
   });
   
   it("transform context", () => {
-    const inliner = createInliner();
-    const files = {
-      a: "a$inline('b|foo')b",
-      b: "b"
-    };
-    const resource = {
-      name: "file",
-      read: (source, target) => {
-        return files[target.args[0]];
+    const test = prepare({
+      files: {
+        a: "a$inline('b|foo')b",
+        b: "b"
+      },
+      transforms: {
+        foo: (context, content) => {
+          assert.equal(context.inlineDirective.start, 1);
+          assert.equal(context.inlineDirective.end, 17);
+          assert.equal(context.sourceContent, "a$inline('b|foo')b");
+          return content + "foo";
+        }
       }
-    };
-    inliner.resource.add(resource);
-    const transform = {
-      name: "foo",
-      transform(context, content) {
-        assert.equal(context.inlineDirective.start, 1);
-        assert.equal(context.inlineDirective.end, 17);
-        assert.equal(context.sourceContent, files.a);
-        return content + "foo";
-      }
-    };
-    inliner.transformer.add(transform);
-    const target = {
-      name: "file",
-      args: ["a"]
-    };
-    return inliner.inline(target)
+    });
+    return test()
       .then(({content}) => {
         assert.equal(content, "abfoob");
+      });
+  });
+  
+  it("dependency", () => {
+    const test = prepare({
+      files: {
+        a: "$inline('b')",
+        b: "$inline('c')",
+        c: "foo"
+      },
+    });
+    return test()
+      .then(({content, dependency}) => {
+        assert.equal(content, "foo");
+        assert.deepEqual(dependency, {
+          b: {
+            c: {}
+          }
+        });
       });
   });
 });
