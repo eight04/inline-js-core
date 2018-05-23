@@ -136,6 +136,12 @@ A pipe object. `name` is the transformer name and `args` is the arguments that w
 Changelog
 ---------
 
+* 0.3.0 (May 23, 2018)
+
+  - Add: export `getLineRange`, `getWhitespace` utils in `./lib/parser`.
+  - Add: The signature of `$inline` is expanded to `$inline(resource, startOffset = 0, endOffset = 0)`. Use `startOffset`, `endOffset` to extend replace range.
+  - **Change: $inline.line now preserves indents.**
+
 * 0.2.0 (May 23, 2018)
 
   - **Change: the first argument of `Transformer.transform` is changed to a `TransformContext` object.** This should help implement "endent" transformer.
