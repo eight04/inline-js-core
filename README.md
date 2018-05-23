@@ -136,6 +136,10 @@ A pipe object. `name` is the transformer name and `args` is the arguments that w
 Changelog
 ---------
 
+* 0.3.1 (May 23, 2018)
+
+  - Fix: sub-dependency is broken.
+
 * 0.3.0 (May 23, 2018)
 
   - Add: export `getLineRange`, `getWhitespace` utils in `./lib/parser`.
