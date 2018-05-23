@@ -386,7 +386,7 @@ $inline('foo:baz')`,
     });
     return test()
       .then(({content}) => {
-        assert.equal(content, `$inline.shortcut('foo', 'bar|t:$1')
+        assert.equal(content, `$inline.shortcut('foo', 'b|t:$1')
 OKbaz`);
       });
 	});

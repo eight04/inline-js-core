@@ -55,7 +55,7 @@ function createInliner({maxDepth = 10} = {}) {
         target: inlineTarget,
         depth: depth + 1
       })
-        .then(({content, subDependency}) => {
+        .then(({content, dependency: subDependency}) => {
           dependency[inlineTarget.args[0]] = subDependency;
           return transformer.transform(transformContext, content, transforms);
         });
