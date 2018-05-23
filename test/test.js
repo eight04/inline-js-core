@@ -91,6 +91,24 @@ describe("parser", () => {
       assert.equal(right.value, "\ntest");
     });
     
+    it("line preserve indent", () => {
+      const [left, result, right] = parseText("  test\n  // $inline.line('foo') test\n  test");
+      assert.deepEqual(left, {
+        type: "text",
+        value: "  test\n  "
+      });
+      assert.deepEqual(result, {
+        type: "$inline.line",
+        start: 9,
+        end: 36,
+        params: ["foo"]
+      });
+      assert.deepEqual(right, {
+        type: "text",
+        value: "\n  test"
+      });
+    });
+    
     it("first line", () => {
       const [result, right] = parseText("test$inline.line('path/to/file')test\ntest");
       assert.equal(result.type, "$inline.line");
