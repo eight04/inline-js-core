@@ -42,7 +42,7 @@ A collection of resource loaders. It has following method:
 
 * `add(transformer: Transformer)`: Add a new transformer.
 * `remove(name: string)`: Remove the transformer whose name is `name`.
-* `transform(target: ResourceSpecifier, content: string|Buffer, transforms: Array<TransformSpecifier>)`: Transform a file through an array of transformers.
+* `transform(context: TransformContext, content: string|Buffer, transforms: Array<TransformSpecifier>)`: Transform a file through an array of transformers.
 
 #### globalShortcuts: object
 
@@ -93,7 +93,20 @@ A resource loader accept a ResourceSpecifier and return the content of the resou
 ### Transformer
 
 * `name`: The name of the transformer.
-* `async transform(target: ResourceSpecifier, content: string|Buffer, ...args)`: `args` is the argument of TransformSpecifier. The return value should be transformed content.
+* `async transform(context: TransformContext, content: string|Buffer, ...args)`: `args` is the argument of TransformSpecifier. The return value should be transformed content.
+
+### TransformContext: object
+
+* `inlineTarget`: `ResourceSpecifier`. The target file that the transformer is proccessing on.
+* `inlineDirective`: An object describing an inline directive. It has following properties:
+
+  - `type`: `string`. Could be `$inline`, `line`, `start`, or `open`.
+  - `params`: `Array`. Arguments of the inline function.
+  - `start`: `number`. The start position of the replace range.
+  - `end`: `number`. The end position of the replace range.
+  
+* `source`: ResourceSpecifier. The file containing the inline directive.
+* `sourceContent`: The content of `source`.
 
 ### Pipe
 
