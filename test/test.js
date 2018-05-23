@@ -45,6 +45,16 @@ describe("parser", () => {
       assert.deepEqual(result.params, ["path/to/file"]);
     });
     
+    it("$inline and skipChars", () => {
+      const [result] = parseText("/* $inline('foo', 3, 3) */");
+      assert.deepEqual(result, {
+        start: 0,
+        end: 26,
+        type: "$inline",
+        params: ["foo", 3, 3]
+      });
+    });
+    
     it("backtick", () => {
       const [result] = parseText("$inline(`path/to/file`)");
       assert.equal(result.type, "$inline");
