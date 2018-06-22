@@ -20,7 +20,7 @@ This module exports following members:
 
 * `createInliner`: Create an inliner.
 
-### createInliner(options?): Inliner object
+### createInliner(options?): Inliner
 
 `options` has following optional properties:
 
@@ -30,7 +30,12 @@ This module exports following members:
 
 Inliner object has following properties:
 
-#### resource: object
+* `async inline(target: ResourceSpecifier, from?: ResourceSpecifier): InlineResult`: Recursively parse and inline directives. If `from` is provided then try to resolve the path with `from`.
+* `resource: ResourceCenter`: A collection of resource loaders.
+* `transformer: TransformCenter`: A collection of transformers.
+* `globalShortcuts: ShortcutCenter`: A collection of global shortcuts.
+
+### ResourceCenter
 
 A collection of resource loaders. It has following method:
 
@@ -38,28 +43,27 @@ A collection of resource loaders. It has following method:
 * `remove(name: string)`: Remove a resource loader whose name is `name`.
 * `read(from: ResourceSpecifier|null, target: ResourceSpecifier)`: Read the content of a resource. `from` is the file that is currently parsed. `target` is the file that should be read.
 
-#### transformer: object
+### TransformCenter
 
 * `add(transformer: Transformer)`: Add a new transformer.
 * `remove(name: string)`: Remove the transformer whose name is `name`.
 * `transform(context: TransformContext, content: string|Buffer, transforms: Array<TransformSpecifier>)`: Transform a file through an array of transformers.
 
-#### globalShortcuts: object
+### ShortcutCenter
 
 * `add(shortcut: ShortcutExpander)`: Add a new shortcut.
 * `remove(name: string)`: Remove the shortcut whose name is `name`.
 * `expand(target: ResourceSpecifier, expando: [Pipe, ...TransformSpecifier])`: Expand the shortcut.
 
-#### async inline(target: ResourceSpecifier): InlineResult
+### InlineResult
 
-Recursively parse and inline the directives of target. InlineResult has following properties:
-
-* `content`: The output content.
-* `dependency`: Object. A dependency map. The key is the first argument of ResourceSpecifier i.e. `target.args[0]`.
+* `content: Buffer|String`: The output content.
+* `target: ResourceSpecifier`: The target that is inlined.
+* `children: Array<InlineResult>`: The `InlineResult` of each inline directive.
 
 ### ResourceLoader
 
-A resource loader accept a ResourceSpecifier and return the content of the resource. It has following properties:
+A resource loader reads a `ResourceSpecifier` and return the content of the resource. It has following properties:
 
 * `name`: The name of the resource loader.
 * `async read(from: ResourceSpecifier, target: ResourceSpecifier): string|Buffer`: Read the content from `target`.
