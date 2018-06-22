@@ -22,19 +22,50 @@ function createInliner({maxDepth = 10} = {}) {
     }
     
     resource.resolve(source, target);
-    const dependency = {};
     const shortcuts = globalShortcuts.clone();
+    let content;
     
     return resource.read(source, target)
-      .then(content => {
+      .then(_content => {
+        content = _content;
         if (typeof content !== 'string') {
-          return content;
+          return {
+            content,
+            target,
+            children: []
+          };
         }
-        return doParseText(content);
-      })
-      .then(content => ({content, dependency}));
+        return Promise.all(parseText(content).map(inlineParseResult))
+          .then(result => {
+            const content = joinContent(result);
+            const children = result.filter(r => r.target);
+            return {
+              content,
+              target,
+              children
+            };
+          });
+      });
       
-    function inlineDirective(content, directive) {
+    function inlineParseResult(result) {
+      if (result.type === "text") {
+        return {
+          content: result.value
+        };
+      }
+      if (result.type == "$inline.shortcut") {
+        shortcuts.add({
+          name: result.params[0],
+          expand: result.params[1]
+        });
+        return {
+          content: ""
+        };
+      }
+      return inlineDirective(result);
+    }
+      
+    function inlineDirective(directive) {
       let pipes = parsePipes(directive.params[0]);
       if (shortcuts.has(pipes[0].name)) {
         pipes = parsePipes(shortcuts.expand(target, pipes));
@@ -55,42 +86,29 @@ function createInliner({maxDepth = 10} = {}) {
         target: inlineTarget,
         depth: depth + 1
       })
-        .then(({content, dependency: subDependency}) => {
-          dependency[inlineTarget.args[0]] = subDependency;
-          return transformer.transform(transformContext, content, transforms);
-        });
-    }
-
-    function doParseText(content) {
-      return Promise.all(
-        parseText(content).map(result => {
-          if (result.type === "text") {
-            return result.value;
-          }
-          if (result.type == "$inline.shortcut") {
-            shortcuts.add({
-              name: result.params[0],
-              expand: result.params[1]
-            });
-            return "";
-          }
-          return inlineDirective(content, result);
-        })
-      )
-        .then(contentArr => {
-          if (contentArr.some(Buffer.isBuffer)) {
-            return Buffer.concat(contentArr.map(b => {
-              if (!Buffer.isBuffer(b)) {
-                b = Buffer.from(b, "binary");
-              }
-              return b;
-            }));
-          }
-          return contentArr.join("");
-        });
+        .then(inlineResult =>
+          transformer.transform(
+            transformContext,
+            inlineResult.content,
+            transforms
+          )
+            .then(content => {
+              // use transformed content
+              inlineResult.content = content;
+              return inlineResult;
+            })
+        );
     }
   }
-  
+
+  function joinContent(resultArr) {
+    if (resultArr.some(r => Buffer.isBuffer(r.content))) {
+      return Buffer.concat(resultArr.map(r =>
+        Buffer.isBuffer(r.content) ? r.content : Buffer.from(r.content, "binary")
+      ));
+    }
+    return resultArr.map(r => r.content).join("");
+  }
 }
 
 module.exports = {createInliner};

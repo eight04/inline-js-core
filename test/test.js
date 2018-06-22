@@ -436,13 +436,27 @@ OKbaz`);
       },
     });
     return test()
-      .then(({content, dependency}) => {
+      .then(({content, children}) => {
         assert.equal(content, "foo");
-        assert.deepEqual(dependency, {
-          b: {
-            c: {}
+        assert.deepEqual(children, [
+          {
+            target: {
+              name: "file",
+              args: ["b"]
+            },
+            content: "foo",
+            children: [
+              {
+                target: {
+                  name: "file",
+                  args: ["c"]
+                },
+                content: "foo",
+                children: []
+              }
+            ]
           }
-        });
+        ]);
       });
   });
 });
