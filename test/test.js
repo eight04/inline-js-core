@@ -347,14 +347,20 @@ describe("functional", () => {
       };
       inliner.resource.add({
         name: "file",
-        read
+        read,
+        resolve(a, b) {
+          b.args[0] = [
+            ...a.args[0].split("/").slice(0, -1),
+            ...b.args[0].split("/")
+          ].join("/");
+        }
       });
       if (options.transforms) {
         for (const [name, transform] of Object.entries(options.transforms)) {
           inliner.transformer.add({name, transform});
         }
       }
-      return inliner.inline({name: "file", args: ["a"]});
+      return inliner.inline({name: "file", args: ["a"]}, options.source);
     };
   }
   
@@ -457,6 +463,20 @@ OKbaz`);
             ]
           }
         ]);
+      });
+  });
+  
+  it("source", () => {
+    const test = prepare({
+      files: {
+        "a": "foo",
+        "b/a": "bar"
+      },
+      source: {name: "file", args: ["b/c"]}
+    });
+    return test()
+      .then(({content}) => {
+        assert.equal(content, "bar");
       });
   });
 });
