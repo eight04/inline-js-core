@@ -62,7 +62,8 @@ Recursively parse and inline the directives of target. InlineResult has followin
 A resource loader accept a ResourceSpecifier and return the content of the resource. It has following properties:
 
 * `name`: The name of the resource loader.
-* `async read(from: ResourceSpecifier, target: ResourceSpecifier)`: Read the content from `target`.
+* `async read(from: ResourceSpecifier, target: ResourceSpecifier): string|Buffer`: Read the content from `target`.
+* `resolve(from: ResourceSpecifier, target: ResourceSpecifier)`: A hook that is used to resolve `target` to an absolute path.
 
 ### ShortcutExpander
 
