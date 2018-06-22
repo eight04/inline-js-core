@@ -63,7 +63,7 @@ A resource loader accept a ResourceSpecifier and return the content of the resou
 
 * `name`: The name of the resource loader.
 * `async read(from: ResourceSpecifier, target: ResourceSpecifier): string|Buffer`: Read the content from `target`.
-* `resolve(from: ResourceSpecifier, target: ResourceSpecifier)`: A hook that is used to resolve `target` to an absolute path.
+* `resolve(from: ResourceSpecifier|null, target: ResourceSpecifier)`: A hook that is used to resolve `target` to an absolute path. If `from` is null (`target` is the entry) then resolve with current dir.
 
 ### ShortcutExpander
 

@@ -349,6 +349,9 @@ describe("functional", () => {
         name: "file",
         read,
         resolve(a, b) {
+          if (!a) {
+            return;
+          }
           b.args[0] = [
             ...a.args[0].split("/").slice(0, -1),
             ...b.args[0].split("/")
