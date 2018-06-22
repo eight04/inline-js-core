@@ -9,7 +9,7 @@ function createInliner({maxDepth = 10} = {}) {
   const transformer = createTransformer();
   const globalShortcuts = createShortcutExpander();
   return {
-    inline: target => inline({target, depth: 0}),
+    inline: (target, source) => inline({target, depth: 0, source}),
     resource,
     transformer,
     globalShortcuts
