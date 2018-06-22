@@ -141,6 +141,12 @@ A pipe object. `name` is the transformer name and `args` is the arguments that w
 Changelog
 ---------
 
+* 0.4.0 (Jun 23, 2018)
+
+  - Add: `from` parameter of `Inliner.inline`.
+  - Add: `InlineResult.target`, `InlineResult.children` to get detailed information about inlined files.
+  - **Drop: `InlineResult.dependency`.**
+
 * 0.3.1 (May 23, 2018)
 
   - Fix: sub-dependency is broken.
