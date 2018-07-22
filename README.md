@@ -142,6 +142,10 @@ A pipe object. `name` is the transformer name and `args` is the arguments that w
 Changelog
 ---------
 
+* 0.4.1 (Jul 22, 2018)
+
+  - Add: `Inliner.useConfig` utility function.
+
 * 0.4.0 (Jun 23, 2018)
 
   - Add: `from` parameter of `Inliner.inline`.
