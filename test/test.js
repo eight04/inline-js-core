@@ -506,3 +506,31 @@ describe("transform", () => {
       });
   });
 });
+
+describe("inliner", () => {
+  const {createInliner} = require("..");
+  it("useConfig", () => {
+    const options = {
+      resource: {
+        add: sinon.spy()
+      },
+      transformer: {
+        add: sinon.spy()
+      },
+      globalShortcuts: {
+        add: sinon.spy()
+      }
+    };
+    const inliner = createInliner(options);
+    inliner.useConfig();
+    inliner.useConfig({});
+    inliner.useConfig({
+      resources: [{name: "foo"}, {name: "bar"}],
+      transforms: [{name: "bak"}, {name: "boo"}, {name: "bos"}],
+      shortcuts: [{name: "baz"}]
+    });
+    assert.equal(options.resource.add.callCount, 2);
+    assert.equal(options.transformer.add.callCount, 3);
+    assert.equal(options.globalShortcuts.add.callCount, 1);
+  });
+});
