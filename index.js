@@ -4,16 +4,34 @@ const {createTransformer} = require("./lib/transformer");
 
 const {parsePipes, parseText} = require("./lib/parser");
 
-function createInliner({maxDepth = 10} = {}) {
-  const resource = createResourceLoader();
-  const transformer = createTransformer();
-  const globalShortcuts = createShortcutExpander();
+function createInliner({
+  maxDepth = 10,
+  resource = createResourceLoader(),
+  transformer = createTransformer(),
+  globalShortcuts = createShortcutExpander()
+} = {}) {
   return {
     inline: (target, source) => inline({target, depth: 0, source}),
     resource,
     transformer,
-    globalShortcuts
+    globalShortcuts,
+    useConfig
   };
+  
+  function useConfig(conf) {
+    if (!conf) {
+      return;
+    }
+    if (conf.resources) {
+      conf.resources.forEach(resource.add);
+    }
+    if (conf.transforms) {
+      conf.transforms.forEach(transformer.add);
+    }
+    if (conf.shortcuts) {
+      conf.shortcuts.forEach(globalShortcuts.add);
+    }
+  }
   
   // async
   function inline({source, target, depth}) {
