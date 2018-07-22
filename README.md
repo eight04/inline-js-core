@@ -34,6 +34,7 @@ Inliner object has following properties:
 * `resource: ResourceCenter`: A collection of resource loaders.
 * `transformer: TransformCenter`: A collection of transformers.
 * `globalShortcuts: ShortcutCenter`: A collection of global shortcuts.
+* `useConfig(config: Object)`: A utility function to add resources, shortcuts, and transforms from a config object. If `config` is falsy, this function has no effect.
 
 ### ResourceCenter
 
