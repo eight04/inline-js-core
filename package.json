@@ -26,5 +26,8 @@
     "nyc": "^11.8.0",
     "sinon": "^5.0.7"
   },
-  "repository": "eight04/inline-js-core"
+  "repository": "eight04/inline-js-core",
+  "engines": {
+    "node": ">=7.6"
+  }
 }
