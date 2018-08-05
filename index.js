@@ -11,7 +11,7 @@ function createInliner({
   globalShortcuts = createShortcutExpander()
 } = {}) {
   return {
-    inline: (target, source) => inline({target, depth: 0, source}),
+    inline,
     resource,
     transformer,
     globalShortcuts,
@@ -33,37 +33,29 @@ function createInliner({
     }
   }
   
-  // async
-  function inline({source, target, depth}) {
+  async function inline({source, target, depth = 0, content}) {
     if (depth > maxDepth) {
       throw new Error(`Max recursion depth ${maxDepth} exceeded.`);
     }
     
     resource.resolve(source, target);
     const shortcuts = globalShortcuts.clone();
-    let content;
-    
-    return resource.read(source, target)
-      .then(_content => {
-        content = _content;
-        if (typeof content !== 'string') {
-          return {
-            content,
-            target,
-            children: []
-          };
-        }
-        return Promise.all(parseText(content).map(inlineParseResult))
-          .then(result => {
-            const content = joinContent(result);
-            const children = result.filter(r => r.target);
-            return {
-              content,
-              target,
-              children
-            };
-          });
-      });
+    if (!content) {
+      content = await resource.read(source, target);
+    }
+    if (typeof content !== 'string') {
+      return {
+        content,
+        target,
+        children: []
+      };
+    }
+    const parseResults = await Promise.all(parseText(content).map(inlineParseResult));
+    return {
+      target,
+      content: joinContent(parseResults),
+      children: parseResults.filter(r => r.target)
+    };
       
     function inlineParseResult(result) {
       if (result.type === "text") {
