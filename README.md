@@ -241,6 +241,12 @@ Find the expander matching `shortcut.name`, expand `shortcut`, concat the result
 Changelog
 ---------
 
+* 0.5.0 (Aug 5, 2018)
+
+  - **The module requires node 7.6 or higher**.
+  - **`inliner.inline` is changed. Now it accept an object.**
+  - Add: expose `inliner.resource.cache`.
+
 * 0.4.1 (Jul 22, 2018)
 
   - Add: `Inliner.useConfig` utility function.
