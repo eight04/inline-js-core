@@ -13,131 +13,230 @@ Installation
 npm install inline-js-core
 ```
 
-API reference
--------------
+API
+----
 
 This module exports following members:
 
 * `createInliner`: Create an inliner.
 
-### createInliner(options?): Inliner
-
-`options` has following optional properties:
-
-* `maxDepth`: The max recursion depth. Default: `10`.
-
-### Inliner
-
-Inliner object has following properties:
-
-* `async inline(target: ResourceSpecifier, from?: ResourceSpecifier): InlineResult`: Recursively parse and inline directives. If `from` is provided then try to resolve the path with `from`.
-* `resource: ResourceCenter`: A collection of resource loaders.
-* `transformer: TransformCenter`: A collection of transformers.
-* `globalShortcuts: ShortcutCenter`: A collection of global shortcuts.
-* `useConfig(config: Object)`: A utility function to add resources, shortcuts, and transforms from a config object. If `config` is falsy, this function has no effect.
-
-### ResourceCenter
-
-A collection of resource loaders. It has following method:
-
-* `add(resourceLoader: ResourceLoader)`: Add a new resource loader.
-* `remove(name: string)`: Remove a resource loader whose name is `name`.
-* `read(from: ResourceSpecifier|null, target: ResourceSpecifier)`: Read the content of a resource. `from` is the file that is currently parsed. `target` is the file that should be read.
-
-### TransformCenter
-
-* `add(transformer: Transformer)`: Add a new transformer.
-* `remove(name: string)`: Remove the transformer whose name is `name`.
-* `transform(context: TransformContext, content: string|Buffer, transforms: Array<TransformSpecifier>)`: Transform a file through an array of transformers.
-
-### ShortcutCenter
-
-* `add(shortcut: ShortcutExpander)`: Add a new shortcut.
-* `remove(name: string)`: Remove the shortcut whose name is `name`.
-* `expand(target: ResourceSpecifier, expando: [Pipe, ...TransformSpecifier])`: Expand the shortcut.
-
-### InlineResult
-
-* `content: Buffer|String`: The output content.
-* `target: ResourceSpecifier`: The target that is inlined.
-* `children: Array<InlineResult>`: The `InlineResult` of each inline directive.
-
-### ResourceLoader
-
-A resource loader reads a `ResourceSpecifier` and return the content of the resource. It has following properties:
-
-* `name`: The name of the resource loader.
-* `async read(from: ResourceSpecifier, target: ResourceSpecifier): string|Buffer`: Read the content from `target`.
-* `resolve(from: ResourceSpecifier|null, target: ResourceSpecifier)`: A hook that is used to resolve `target` to an absolute path. If `from` is null (`target` is the entry) then resolve with current dir.
-
-### ShortcutExpander
-
-* `name`: The name of the shortcut.
-* `expand`: function or string. Convert a resource specifier into another resource specifier. For example, this expander
-
-  ```js
-  {
-    name: "foo",
-    expand: "foobar|t1:$1|t2:$2"
-  }
-  ```
-  
-  would convert
-  
-  ```
-  foo:a,b
-  ```
-  
-  into
-  
-  ```
-  foobar|t1:a|t2:b
-  ```
-  
-  If `expand` is a function, the signature is `expand(target: ResourceSpecifier, ...args)`. `args` is the argument of the original resource (`['a', 'b']` in the above example).
-
-### Transformer
-
-* `name`: The name of the transformer.
-* `async transform(context: TransformContext, content: string|Buffer, ...args)`: `args` is the argument of TransformSpecifier. The return value should be transformed content.
-
-### TransformContext: object
-
-* `inlineTarget`: `ResourceSpecifier`. The target file that the transformer is proccessing on.
-* `inlineDirective`: An object describing an inline directive. It has following properties:
-
-  - `type`: `string`. Could be `$inline`, `line`, `start`, or `open`.
-  - `params`: `Array`. Arguments of the inline function.
-  - `start`: `number`. The start position of the replace range.
-  - `end`: `number`. The end position of the replace range.
-  
-* `source`: ResourceSpecifier. The file containing the inline directive.
-* `sourceContent`: The content of `source`.
-
-### Pipe
-
-This library is built with pipe syntax. A Pipe object is just an object having `name` and `args` properties. For example:
-
-```
-foo:bar|baz:bak
-```
-
-Would be parsed into a list of pipes:
+### createInliner
 
 ```js
-[
-  {name: "foo", args: ["bar"]},
-  {name: "baz", args: ["bak"]}
-]
+const inliner = createInliner({
+  maxDepth?: Number
+});
 ```
 
-### ResourceSpecifier
+`maxDepth` - the max recursion depth. Default: `10`.
 
-A pipe object. `name` is the resource name and `args` is usually the path to the file.
+### inliner.inline
 
-### TransformSpecifier
+```js
+const inlineResult = await inliner.inline({
+  target: {
+    name: String,
+    args: Array
+  },
+  source?: Object,
+  content?: String|Buffer
+});
+```
 
-A pipe object. `name` is the transformer name and `args` is the arguments that would be passed into the transformer.
+Read the resource from `target` and process $inline directives recursively.
+
+`target` is a resource specifier. A simple file could be represented as:
+
+```js
+{
+  name: "file",
+  args: ["D:\myfile.txt"]
+}
+```
+
+`source` is also a resource specifier like `target`. It is only used to resolve relative path to absolute path:
+
+```js
+const source = {
+  name: "file",
+  args: ["D:\foo.txt"]
+};
+const target = {
+  name: "file",
+  args: ["bar.txt"]
+};
+inliner.resource.resolve(source, target);
+console.log(target);
+/*
+{
+  name: "file",
+  args: ["D:\bar.txt"]
+}
+*/
+```
+
+`inlineResult` has following properties:
+
+* `content: Buffer|String` - the output content.
+* `target: Object` - the target resource that is processed.
+* `children: [...inlineResult: Object]` - `inlineResult`s of child dependencies (i.e. files being inlined by `target`).
+
+### inliner.useConfig
+
+```js
+inliner.useConfig({
+  resources?: Array,
+  transforms?: Array,
+  shortcuts?: Array
+});
+```
+
+A utility function to add resources, shortcuts, and transforms from a config object. If the argument is falsy, this function has no effect.
+
+### inliner.resource.add
+
+```js
+inliner.resource.add({
+  name: String,
+  read: async (source: Object, target: Object) => String|Buffer,
+  resolve?: (source: Object, target: Object) => null,
+  hash?: (source: Object, target: Object) => String
+});
+```
+
+Add a resource loader.
+
+`name` is the name of the resource loader.
+
+`read` should return the content of `target` file. `source` is the parent file that inlines `target`.
+
+If `resolve` is defined, inliner would call this function before `read`.
+
+`hash` should convert a `(source, target)` pair into a unique string that inliner would use it to cache the content. If `hash` is undefined then the content is never cached.
+
+### inliner.resource.remove
+
+```js
+inliner.resource.remove(name: String);
+```
+
+Remove a resource loader that the name is `name`.
+
+### inliner.resource.read
+
+```js
+const content = await inliner.resource.read(source: Object, target: Object);
+```
+
+Find the resource loader matching `target.name` then call the `read` function of the resource loader. Inliner would try caching the result after `read`.
+
+### inliner.resource.cache
+
+A `Map` object containing `hash: String`/`pendingContent: Promise<content>` pairs.
+
+### inliner.transformer.add
+
+```js
+inliner.transformer.add({
+  name: String,
+  transform: async (context: Object, content: String|Buffer, ...args) => outputContent: String|Buffer
+});
+```
+
+`name` is the name of the transformer.
+
+`transform` function is used to transform `content`.
+
+`context` object provides some additional information about the source resource. It has following properties:
+
+* `inlineTarget: Object` - the target resource. The file that is being inlined and transformed.
+* `inlineDirective` - an object that represents an inline directive. It has following properties:
+
+  - `type: String` - could be `$inline`, `line`, `start`, or `open`.
+  - `params: Array<String>` - arguments of the inline function.
+  - `start: Number` - the start index of the replace range.
+  - `end: Number` - the end index of the replace range.
+  
+* `source: Object` - the source resource. The file containing the inline directive.
+* `sourceContent: String` - the content of `source`.
+
+Other `args` is specified by the $inline directive. For example:
+
+```js
+$inline("myfile|transformA:foo,bar")
+```
+
+In this case, `args` would be `["foo", "bar"]`.
+
+### inliner.transformer.remove
+
+```js
+inliner.transformer.remove(name: String)
+```
+
+Remove the transformer.
+
+### inliner.transformer.transform
+
+```js
+const outputContent = await inliner.transformer.transform(
+  context: Object,
+  content: String|Buffer,
+  transforms: Array<Object>
+);
+```
+
+Transform `content` through a list of `transforms`.
+
+### inliner.globalShortcuts.add
+
+```js
+inliner.globalShortcuts.add({
+  name: String,
+  expand: String|Function
+})
+```
+
+Add a global shortcut expander.
+
+`name` is the name of the shortcut.
+
+`expand` is a pattern that would expand the original string. For example, with the following expander:
+
+```js
+{
+  name: "foo",
+  expand: "foobar|t1:$1|t2:$2"
+}
+```
+
+It can expand `foo:a,b` into `foobar|t1:a|t2:b`. `$n` (`n=1...9`) would be replaced with the parameter at specified index. `$&` would be replaced with all parameters.
+
+`expand` can also be a function:
+
+```
+expand: (target: Object, ...args) => expandPattern: String
+```
+
+`target` is the resource that is being processed.
+
+`args` are parameters of the shortcut.
+
+### inliner.globalShortcuts.remove
+
+```js
+inliner.globalShortcuts.remove(name: String)
+```
+
+Remove a global shortcut expander.
+
+### inliner.globalShortcuts.expand
+
+```js
+const outputString = inliner.globalShortcuts.expand(target: Object, pipes: [shortcut, ...otherPipes])
+```
+
+Find the expander matching `shortcut.name`, expand `shortcut`, concat the result with `otherPipes`, then return the final string.
 
 Changelog
 ---------

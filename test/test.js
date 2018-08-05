@@ -363,7 +363,10 @@ describe("functional", () => {
           inliner.transformer.add({name, transform});
         }
       }
-      return inliner.inline({name: "file", args: ["a"]}, options.source);
+      return inliner.inline({
+        target: {name: "file", args: ["a"]},
+        source: options.source
+      });
     };
   }
   
