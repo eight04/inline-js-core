@@ -10,7 +10,6 @@
   "scripts": {
     "lint": "eslint **/*.js --ignore-pattern coverage --cache",
     "nyc": "nyc --reporter=html mocha",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
     "test": "npm run lint && npm run nyc",
     "preversion": "npm test",
     "postversion": "git push --follow-tags && npm publish"
@@ -20,10 +19,10 @@
     "js-tokens": "^4.0.0"
   },
   "devDependencies": {
-    "coveralls": "^3.0.1",
-    "eslint": "^4.19.1",
-    "mocha": "^5.2.0",
-    "nyc": "^11.8.0",
+    "coveralls": "^3.0.3",
+    "eslint": "^5.16.0",
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.1",
     "sinon": "^5.0.7"
   },
   "repository": "eight04/inline-js-core",
