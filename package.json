@@ -23,7 +23,7 @@
     "eslint": "^5.16.0",
     "mocha": "^6.1.4",
     "nyc": "^14.1.1",
-    "sinon": "^5.0.7"
+    "sinon": "^7.3.2"
   },
   "repository": "eight04/inline-js-core",
   "engines": {
